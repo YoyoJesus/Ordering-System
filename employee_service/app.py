@@ -104,5 +104,112 @@ def order_history():
         order['_id'] = str(order['_id'])
     return render_template('order_history.html', orders=completed_orders)
 
+@app.route('/admin/menu')
+def admin_menu():
+    """Admin page for managing menu items"""
+    menu_items = list(mongo.db.menu_items.find().sort([('category', 1), ('name', 1)]))
+    # Convert ObjectId to string for JSON serialization
+    for item in menu_items:
+        item['_id'] = str(item['_id'])
+    return render_template('admin_menu.html', menu_items=menu_items)
+
+@app.route('/admin/menu/add', methods=['POST'])
+def add_menu_item():
+    """Add a new menu item"""
+    try:
+        name = request.form.get('name')
+        category = request.form.get('category')
+        description = request.form.get('description', '')
+        base_price = float(request.form.get('base_price', 0))
+        image_url = request.form.get('image_url', '')
+        
+        # Parse customizations
+        import json
+        customizations_json = request.form.get('customizations', '[]')
+        customizations = json.loads(customizations_json) if customizations_json else []
+        
+        menu_item = {
+            'name': name,
+            'category': category,
+            'description': description,
+            'base_price': base_price,
+            'image_url': image_url,
+            'customizations': customizations,
+            'active': True,
+            'created_at': datetime.utcnow()
+        }
+        
+        mongo.db.menu_items.insert_one(menu_item)
+        flash(f'Menu item "{name}" added successfully!', 'success')
+    except Exception as e:
+        flash(f'Error adding menu item: {str(e)}', 'error')
+    
+    return redirect(url_for('admin_menu'))
+
+@app.route('/admin/menu/edit/<item_id>', methods=['POST'])
+def edit_menu_item(item_id):
+    """Edit an existing menu item"""
+    try:
+        import json
+        name = request.form.get('name')
+        category = request.form.get('category')
+        description = request.form.get('description', '')
+        base_price = float(request.form.get('base_price', 0))
+        image_url = request.form.get('image_url', '')
+        customizations_json = request.form.get('customizations', '[]')
+        customizations = json.loads(customizations_json) if customizations_json else []
+        
+        update_data = {
+            'name': name,
+            'category': category,
+            'description': description,
+            'base_price': base_price,
+            'image_url': image_url,
+            'customizations': customizations,
+            'updated_at': datetime.utcnow()
+        }
+        
+        mongo.db.menu_items.update_one(
+            {'_id': ObjectId(item_id)},
+            {'$set': update_data}
+        )
+        flash(f'Menu item "{name}" updated successfully!', 'success')
+    except Exception as e:
+        flash(f'Error updating menu item: {str(e)}', 'error')
+    
+    return redirect(url_for('admin_menu'))
+
+@app.route('/admin/menu/toggle/<item_id>', methods=['POST'])
+def toggle_menu_item(item_id):
+    """Toggle menu item active status"""
+    try:
+        item = mongo.db.menu_items.find_one({'_id': ObjectId(item_id)})
+        if item:
+            new_status = not item.get('active', True)
+            mongo.db.menu_items.update_one(
+                {'_id': ObjectId(item_id)},
+                {'$set': {'active': new_status}}
+            )
+            status_text = 'activated' if new_status else 'deactivated'
+            flash(f'Menu item {status_text} successfully!', 'success')
+    except Exception as e:
+        flash(f'Error toggling menu item: {str(e)}', 'error')
+    
+    return redirect(url_for('admin_menu'))
+
+@app.route('/admin/menu/delete/<item_id>', methods=['POST'])
+def delete_menu_item(item_id):
+    """Delete a menu item"""
+    try:
+        result = mongo.db.menu_items.delete_one({'_id': ObjectId(item_id)})
+        if result.deleted_count > 0:
+            flash('Menu item deleted successfully!', 'success')
+        else:
+            flash('Menu item not found!', 'error')
+    except Exception as e:
+        flash(f'Error deleting menu item: {str(e)}', 'error')
+    
+    return redirect(url_for('admin_menu'))
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

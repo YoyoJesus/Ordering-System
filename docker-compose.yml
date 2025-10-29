@@ -7,6 +7,29 @@ services:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  seed_database:
+    image: python:3.12-slim
+    container_name: seed_database
+    working_dir: /app
+    volumes:
+      - ./seed_menu_items.py:/app/seed_menu_items.py
+      - ./.env:/app/.env
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/ordering_system
+    command: >
+      sh -c "
+        pip install pymongo python-dotenv --quiet &&
+        python seed_menu_items.py
+      "
+    depends_on:
+      mongodb:
+        condition: service_healthy
 
   customer_service:
     build: ./customer_service
@@ -17,7 +40,8 @@ services:
       - FLASK_ENV=development
       - MONGO_URI=mongodb://mongodb:27017/ordering_system
     depends_on:
-      - mongodb
+      seed_database:
+        condition: service_completed_successfully
 
   employee_service:
     build: ./employee_service
@@ -28,7 +52,8 @@ services:
       - FLASK_ENV=development
       - MONGO_URI=mongodb://mongodb:27017/ordering_system
     depends_on:
-      - mongodb
+      seed_database:
+        condition: service_completed_successfully
 
 volumes:
   mongo_data:

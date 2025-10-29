@@ -44,31 +44,71 @@ def send_sms(phone_number, message):
 
 @app.route('/')
 def index():
-    return render_template('customer_order.html')
+    # Get all active menu items from database
+    menu_items = list(mongo.db.menu_items.find({'active': True}).sort('category', 1))
+    return render_template('customer_order.html', menu_items=menu_items)
+
+@app.route('/api/menu_items')
+def get_menu_items():
+    """API endpoint to get menu items"""
+    menu_items = list(mongo.db.menu_items.find({'active': True}).sort('category', 1))
+    for item in menu_items:
+        item['_id'] = str(item['_id'])
+    return jsonify(menu_items)
 
 @app.route('/place_order', methods=['POST'])
 def place_order():
     try:
         customer_name = request.form.get('customer_name')
         customer_phone = request.form.get('customer_phone', '').strip()
-        order_items = request.form.get('order_items')
-        total_price = float(request.form.get('total_price', 0))
+        
+        # Parse the order items from JSON
+        import json
+        order_items_data = json.loads(request.form.get('order_items', '[]'))
+        
+        # Calculate total and format items
+        total_price = 0
+        order_items_text = []
+        
+        for item in order_items_data:
+            item_total = item['price'] * item['quantity']
+            total_price += item_total
+            
+            # Format item with customizations
+            item_text = f"{item['quantity']}x {item['name']}"
+            if item.get('customizations'):
+                item_text += f" ({', '.join(item['customizations'])})"
+            item_text += f" - ${item_total:.2f}"
+            order_items_text.append(item_text)
+        
+        order_items_str = '; '.join(order_items_text)
         order_number = generate_order_number()
+        
         order = {
             'order_number': order_number,
             'customer_name': customer_name,
             'customer_phone': customer_phone if customer_phone else None,
-            'order_items': order_items,
+            'order_items': order_items_str,
+            'order_items_detailed': order_items_data,  # Store detailed order data
             'total_price': total_price,
             'status': 'pending',
             'order_time': datetime.utcnow()
         }
+        
         mongo.db.orders.insert_one(order)
+        
         if customer_phone:
-            message = f"Thank you {customer_name}! Your order #{order_number} has been placed. We'll text you when it's ready!"
+            message = f"Thank you {customer_name}! Your order #{order_number} has been placed. Total: ${total_price:.2f}. We'll text you when it's ready!"
             send_sms(customer_phone, message)
-        return render_template('order_confirmation.html', order_number=order_number, customer_name=customer_name)
+        
+        return render_template('order_confirmation.html', 
+                             order_number=order_number, 
+                             customer_name=customer_name,
+                             customer_phone=customer_phone,
+                             order_items=order_items_str,
+                             total_price=total_price)
     except Exception as e:
+        print(f"Error placing order: {str(e)}")
         flash(f'Error placing order: {str(e)}', 'error')
         return redirect(url_for('index'))
 

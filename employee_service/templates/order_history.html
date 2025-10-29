@@ -1,14 +1,302 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order History</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    {% extends "base.html" %}
-    <!-- Paste original order_history.html content here -->
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}Order History - Analytics{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>📊 Order History & Analytics</h2>
+        <div>
+            <a href="{{ url_for('worker_dashboard') }}" class="btn btn-primary">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Analytics Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1 opacity-75">Total Orders</h6>
+                            <h2 class="mb-0">{{ orders|length }}</h2>
+                        </div>
+                        <div class="fs-1 opacity-50">
+                            <i class="bi bi-receipt"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1 opacity-75">Total Revenue</h6>
+                            <h2 class="mb-0">
+                                {% set total_revenue = orders|sum(attribute='total_price') %}
+                                ${{ "%.2f"|format(total_revenue) }}
+                            </h2>
+                        </div>
+                        <div class="fs-1 opacity-50">
+                            <i class="bi bi-currency-dollar"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1 opacity-75">Average Order</h6>
+                            <h2 class="mb-0">
+                                {% if orders|length > 0 %}
+                                    {% set avg = (orders|sum(attribute='total_price')) / (orders|length) %}
+                                    ${{ "%.2f"|format(avg) }}
+                                {% else %}
+                                    $0.00
+                                {% endif %}
+                            </h2>
+                        </div>
+                        <div class="fs-1 opacity-50">
+                            <i class="bi bi-graph-up"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 bg-warning text-dark">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1 opacity-75">Today's Orders</h6>
+                            <h2 class="mb-0">
+                                {% set today_orders = orders|selectattr('completed_time')|list %}
+                                {{ today_orders|length }}
+                            </h2>
+                        </div>
+                        <div class="fs-1 opacity-50">
+                            <i class="bi bi-calendar-check"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Orders Table -->
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h5 class="mb-0">Completed Orders</h5>
+                </div>
+                <div class="col-auto">
+                    <input type="text" id="searchInput" class="form-control" placeholder="🔍 Search orders..." onkeyup="filterTable()">
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="ordersTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="sortable" onclick="sortTable(0)">
+                                Order # <i class="bi bi-arrow-down-up"></i>
+                            </th>
+                            <th class="sortable" onclick="sortTable(1)">
+                                Customer <i class="bi bi-arrow-down-up"></i>
+                            </th>
+                            <th>Items</th>
+                            <th class="sortable" onclick="sortTable(3)">
+                                Total <i class="bi bi-arrow-down-up"></i>
+                            </th>
+                            <th class="sortable" onclick="sortTable(4)">
+                                Order Time <i class="bi bi-arrow-down-up"></i>
+                            </th>
+                            <th class="sortable" onclick="sortTable(5)">
+                                Completed Time <i class="bi bi-arrow-down-up"></i>
+                            </th>
+                            <th>Duration</th>
+                            <th>Contact</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr>
+                            <td>
+                                <span class="badge bg-secondary fs-6">{{ order.order_number }}</span>
+                            </td>
+                            <td>
+                                <strong>{{ order.customer_name }}</strong>
+                            </td>
+                            <td>
+                                <small class="text-muted">{{ order.order_items[:50] }}{% if order.order_items|length > 50 %}...{% endif %}</small>
+                            </td>
+                            <td>
+                                <strong class="text-success">${{ "%.2f"|format(order.total_price) }}</strong>
+                            </td>
+                            <td>
+                                {% if order.order_time %}
+                                    <small>{{ order.order_time.strftime('%m/%d/%Y') }}</small><br>
+                                    <small class="text-muted">{{ order.order_time.strftime('%I:%M %p') }}</small>
+                                {% else %}
+                                    <small class="text-muted">N/A</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if order.completed_time %}
+                                    <small>{{ order.completed_time.strftime('%m/%d/%Y') }}</small><br>
+                                    <small class="text-muted">{{ order.completed_time.strftime('%I:%M %p') }}</small>
+                                {% else %}
+                                    <small class="text-muted">N/A</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if order.order_time and order.completed_time %}
+                                    {% set duration = (order.completed_time - order.order_time).total_seconds() / 60 %}
+                                    <span class="badge bg-{{ 'success' if duration <= 20 else 'warning' if duration <= 30 else 'danger' }}">
+                                        {{ "%.0f"|format(duration) }} min
+                                    </span>
+                                {% else %}
+                                    <small class="text-muted">N/A</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if order.customer_phone %}
+                                    <a href="tel:{{ order.customer_phone }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-telephone"></i>
+                                    </a>
+                                {% else %}
+                                    <small class="text-muted">No phone</small>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-5">
+                                <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                                <h5>No completed orders yet</h5>
+                                <p>Completed orders will appear here</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% if orders|length > 0 %}
+        <div class="card-footer bg-light text-muted">
+            Showing {{ orders|length }} completed orders
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .sortable {
+        cursor: pointer;
+        user-select: none;
+    }
+    
+    .sortable:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .card {
+        transition: transform 0.2s;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .table tbody tr {
+        transition: background-color 0.2s;
+    }
+    
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+</style>
+
+<script>
+// Search/Filter functionality
+function filterTable() {
+    const input = document.getElementById('searchInput');
+    const filter = input.value.toLowerCase();
+    const table = document.getElementById('ordersTable');
+    const rows = table.getElementsByTagName('tr');
+    
+    for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        const text = row.textContent.toLowerCase();
+        
+        if (text.includes(filter)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    }
+}
+
+// Table sorting functionality
+let sortDirection = {};
+
+function sortTable(columnIndex) {
+    const table = document.getElementById('ordersTable');
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    
+    // Skip if no data rows
+    if (rows.length === 0 || rows[0].cells.length === 1) return;
+    
+    // Initialize sort direction for this column
+    if (sortDirection[columnIndex] === undefined) {
+        sortDirection[columnIndex] = true;
+    } else {
+        sortDirection[columnIndex] = !sortDirection[columnIndex];
+    }
+    
+    const isAscending = sortDirection[columnIndex];
+    
+    rows.sort((a, b) => {
+        let aValue = a.cells[columnIndex].textContent.trim();
+        let bValue = b.cells[columnIndex].textContent.trim();
+        
+        // Try to parse as number (for prices and times)
+        const aNum = parseFloat(aValue.replace(/[$,]/g, ''));
+        const bNum = parseFloat(bValue.replace(/[$,]/g, ''));
+        
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+            return isAscending ? aNum - bNum : bNum - aNum;
+        }
+        
+        // String comparison
+        return isAscending 
+            ? aValue.localeCompare(bValue)
+            : bValue.localeCompare(aValue);
+    });
+    
+    // Re-append rows in sorted order
+    rows.forEach(row => tbody.appendChild(row));
+}
+
+// Auto-refresh every 30 seconds
+setInterval(() => {
+    location.reload();
+}, 30000);
+</script>
+
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+{% endblock %}
