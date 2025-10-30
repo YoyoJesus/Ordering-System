@@ -37,47 +37,61 @@
     <div class="container-fluid mt-3">
         <div class="row">
             <div class="col-12">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h1>👩‍🍳 Worker Dashboard</h1>
-                    <div>
-                        <a href="/admin/menu" class="btn btn-outline-success me-2">
-                            <i class="bi bi-list-ul"></i> Menu Management
-                        </a>
-                        <a href="/order_history" class="btn btn-outline-secondary me-2">Order History</a>
-                        <button onclick="location.reload()" class="btn btn-primary">Refresh</button>
+                <div class="card shadow-lg border-0 mb-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h1 class="mb-0">👩‍🍳 Worker Dashboard</h1>
+                            <div>
+                                <a href="/display" class="btn btn-info me-2 shadow-sm" target="_blank">
+                                    <i class="bi bi-grid-3x3-gap"></i> Display Board
+                                </a>
+                                <a href="/admin/menu" class="btn btn-success me-2 shadow-sm">
+                                    <i class="bi bi-list-ul"></i> Menu Management
+                                </a>
+                                <a href="/order_history" class="btn btn-secondary me-2 shadow-sm">
+                                    <i class="bi bi-clock-history"></i> Order History
+                                </a>
+                                <button onclick="location.reload()" class="btn btn-primary shadow-sm">
+                                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                                </button>
+                            </div>
+                        </div>
+
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show border-0 shadow-sm">
+                                        <i class="bi bi-{{ 'check-circle' if category == 'success' else 'exclamation-triangle' }}"></i>
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
                     </div>
                 </div>
-
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
 
                 <div class="row" id="ordersContainer">
                     {% if orders %}
                         {% for order in orders %}
                         <div class="col-lg-4 col-md-6 mb-4">
-                            <div class="card order-card status-{{ order.status }}">
-                                <div class="card-header d-flex justify-content-between align-items-center">
-                                    <h5 class="mb-0">Order #{{ order.order_number }}</h5>
-                                    <span class="badge bg-{{ 'warning' if order.status == 'pending' else 'info' }}">
+                            <div class="card order-card status-{{ order.status }} shadow border-0">
+                                <div class="card-header bg-{{ 'warning' if order.status == 'pending' else 'info' }} text-white d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0"><i class="bi bi-receipt"></i> #{{ order.order_number }}</h5>
+                                    <span class="badge bg-white text-{{ 'warning' if order.status == 'pending' else 'info' }}">
                                         {{ order.status.replace('_', ' ').title() }}
                                     </span>
                                 </div>
                                 <div class="card-body">
-                                    <h6 class="card-title">👤 {{ order.customer_name }}</h6>
+                                    <h6 class="card-title text-primary"><i class="bi bi-person-circle"></i> {{ order.customer_name }}</h6>
                                     {% if order.customer_phone %}
-                                        <p class="text-muted small">📱 {{ order.customer_phone }}</p>
+                                        <p class="text-muted small mb-3">
+                                            <i class="bi bi-telephone"></i> {{ order.customer_phone }}
+                                        </p>
                                     {% endif %}
-                                    <div class="mb-3">
-                                        <strong>Order Items:</strong>
-                                        <div class="small">
+                                    <div class="mb-3 p-3 bg-light rounded">
+                                        <strong class="text-secondary"><i class="bi bi-bag"></i> Order Items:</strong>
+                                        <div class="small mt-2">
                                             {% for item in order.order_items.split('; ') %}
                                                 <div>• {{ item }}</div>
                                             {% endfor %}

@@ -55,5 +55,17 @@ services:
       seed_database:
         condition: service_completed_successfully
 
+  display_service:
+    build: ./display_service
+    container_name: display_service
+    ports:
+      - "5002:5000"
+    environment:
+      - FLASK_ENV=development
+      - MONGO_URI=mongodb://mongodb:27017/ordering_system
+    depends_on:
+      seed_database:
+        condition: service_completed_successfully
+
 volumes:
   mongo_data:

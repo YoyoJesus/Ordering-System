@@ -7,96 +7,100 @@
     <div class="row">
         <!-- Menu Items Section -->
         <div class="col-lg-8">
-            <h2 class="mb-4">🍽️ Our Menu</h2>
-            
-            <!-- Category Filter -->
-            <div class="btn-group mb-4" role="group">
-                <button type="button" class="btn btn-outline-primary active" onclick="filterCategory('all')">All Items</button>
-                <button type="button" class="btn btn-outline-primary" onclick="filterCategory('appetizer')">Appetizers</button>
-                <button type="button" class="btn btn-outline-primary" onclick="filterCategory('main')">Mains</button>
-                <button type="button" class="btn btn-outline-primary" onclick="filterCategory('side')">Sides</button>
-                <button type="button" class="btn btn-outline-primary" onclick="filterCategory('drink')">Drinks</button>
-                <button type="button" class="btn btn-outline-primary" onclick="filterCategory('dessert')">Desserts</button>
-            </div>
+            <div class="card shadow-lg mb-4">
+                <div class="card-body">
+                    <h2 class="mb-4">🍽️ Our Menu</h2>
+                    
+                    <!-- Category Filter -->
+                    <div class="btn-group mb-4 flex-wrap" role="group">
+                        <button type="button" class="btn btn-outline-primary active" onclick="filterCategory('all')">All Items</button>
+                        <button type="button" class="btn btn-outline-primary" onclick="filterCategory('appetizer')">Appetizers</button>
+                        <button type="button" class="btn btn-outline-primary" onclick="filterCategory('main')">Mains</button>
+                        <button type="button" class="btn btn-outline-primary" onclick="filterCategory('side')">Sides</button>
+                        <button type="button" class="btn btn-outline-primary" onclick="filterCategory('drink')">Drinks</button>
+                        <button type="button" class="btn btn-outline-primary" onclick="filterCategory('dessert')">Desserts</button>
+                    </div>
 
-            <!-- Menu Grid -->
-            <div id="menuGrid" class="row g-3">
-                {% if menu_items %}
-                    {% for item in menu_items %}
-                    <div class="col-md-6 col-lg-4 menu-item" data-category="{{ item.category }}">
-                        <div class="card h-100 shadow-sm menu-card">
-                            {% if item.image_url %}
-                            <img src="{{ item.image_url }}" class="card-img-top menu-image" alt="{{ item.name }}">
-                            {% else %}
-                            <div class="card-img-top menu-image-placeholder d-flex align-items-center justify-content-center bg-light">
-                                <span class="text-muted fs-1">🍴</span>
-                            </div>
-                            {% endif %}
-                            <div class="card-body">
-                                <h5 class="card-title">{{ item.name }}</h5>
-                                <p class="card-text text-muted small">{{ item.description }}</p>
-                                <p class="card-text">
-                                    <strong class="text-success fs-5">${{ "%.2f"|format(item.base_price) }}</strong>
-                                    <span class="badge bg-secondary">{{ item.category }}</span>
-                                </p>
-                                
-                                <!-- Customizations -->
-                                {% if item.customizations %}
-                                <div class="customizations mb-2">
-                                    {% for custom in item.customizations %}
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input customization-checkbox" type="checkbox" 
-                                               id="custom_{{ item._id }}_{{ loop.index }}"
-                                               data-item-id="{{ item._id }}"
-                                               data-name="{{ custom.name }}"
-                                               data-price="{{ custom.price }}">
-                                        <label class="form-check-label small" for="custom_{{ item._id }}_{{ loop.index }}">
-                                            {{ custom.name }} 
-                                            {% if custom.price > 0 %}
-                                            (+${{ "%.2f"|format(custom.price) }})
-                                            {% endif %}
-                                        </label>
+                    <!-- Menu Grid -->
+                    <div id="menuGrid" class="row g-4">
+                        {% if menu_items %}
+                            {% for item in menu_items %}
+                            <div class="col-md-6 col-lg-4 menu-item" data-category="{{ item.category }}">
+                                <div class="card h-100 menu-card border-0 shadow-sm">
+                                    {% if item.image_url %}
+                                    <img src="{{ item.image_url }}" class="card-img-top menu-image" alt="{{ item.name }}">
+                                    {% else %}
+                                    <div class="card-img-top menu-image-placeholder d-flex align-items-center justify-content-center bg-light">
+                                        <span class="text-muted fs-1">🍴</span>
                                     </div>
-                                    {% endfor %}
+                                    {% endif %}
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ item.name }}</h5>
+                                        <p class="card-text text-muted small">{{ item.description }}</p>
+                                        <p class="card-text">
+                                            <strong class="text-success fs-5">${{ "%.2f"|format(item.base_price) }}</strong>
+                                            <span class="badge bg-secondary ms-2">{{ item.category }}</span>
+                                        </p>
+                                        
+                                        <!-- Customizations -->
+                                        {% if item.customizations %}
+                                        <div class="customizations mb-2">
+                                            {% for custom in item.customizations %}
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input customization-checkbox" type="checkbox" 
+                                                       id="custom_{{ item._id }}_{{ loop.index }}"
+                                                       data-item-id="{{ item._id }}"
+                                                       data-name="{{ custom.name }}"
+                                                       data-price="{{ custom.price }}">
+                                                <label class="form-check-label small" for="custom_{{ item._id }}_{{ loop.index }}">
+                                                    {{ custom.name }} 
+                                                    {% if custom.price > 0 %}
+                                                    (+${{ "%.2f"|format(custom.price) }})
+                                                    {% endif %}
+                                                </label>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                        
+                                        <button class="btn btn-primary w-100 add-to-cart-btn" 
+                                                data-id="{{ item._id }}"
+                                                data-name="{{ item.name }}"
+                                                data-price="{{ item.base_price }}"
+                                                data-category="{{ item.category }}">
+                                            <i class="bi bi-cart-plus"></i> Add to Order
+                                        </button>
+                                    </div>
                                 </div>
-                                {% endif %}
-                                
-                                <button class="btn btn-primary w-100 add-to-cart-btn" 
-                                        data-id="{{ item._id }}"
-                                        data-name="{{ item.name }}"
-                                        data-price="{{ item.base_price }}"
-                                        data-category="{{ item.category }}">
-                                    <i class="bi bi-cart-plus"></i> Add to Order
-                                </button>
                             </div>
-                        </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="col-12">
+                                <div class="alert alert-info border-0 shadow-sm">
+                                    <h5><i class="bi bi-info-circle"></i> No menu items available</h5>
+                                    <p>Please check back later or contact the administrator to add menu items.</p>
+                                </div>
+                            </div>
+                        {% endif %}
                     </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="col-12">
-                        <div class="alert alert-info">
-                            <h5>No menu items available</h5>
-                            <p>Please check back later or contact the administrator to add menu items.</p>
-                        </div>
-                    </div>
-                {% endif %}
+                </div>
             </div>
         </div>
 
         <!-- Cart Section -->
         <div class="col-lg-4">
-            <div class="card shadow sticky-top" style="top: 20px;">
+            <div class="card shadow-lg sticky-top" style="top: 20px;">
                 <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">🛒 Your Order</h4>
+                    <h4 class="mb-0"><i class="bi bi-cart3"></i> Your Order</h4>
                 </div>
                 <div class="card-body">
                     <!-- Customer Info -->
                     <div class="mb-3">
-                        <label for="customer_name" class="form-label">Name *</label>
+                        <label for="customer_name" class="form-label fw-bold">Name *</label>
                         <input type="text" class="form-control" id="customer_name" required>
                     </div>
                     <div class="mb-3">
-                        <label for="customer_phone" class="form-label">Phone (optional for SMS)</label>
+                        <label for="customer_phone" class="form-label fw-bold">Phone (for SMS updates)</label>
                         <input type="tel" class="form-control" id="customer_phone" 
                                placeholder="555-123-4567">
                     </div>
@@ -104,19 +108,22 @@
                     <hr>
 
                     <!-- Cart Items -->
-                    <div id="cartItems" class="mb-3">
-                        <p class="text-muted text-center">Your cart is empty</p>
+                    <div id="cartItems" class="mb-3" style="max-height: 400px; overflow-y: auto;">
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-cart-x fs-1"></i>
+                            <p class="mt-2">Your cart is empty</p>
+                        </div>
                     </div>
 
                     <!-- Total -->
-                    <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded">
                         <h5 class="mb-0">Total:</h5>
-                        <h4 class="mb-0 text-success" id="totalPrice">$0.00</h4>
+                        <h3 class="mb-0 text-success" id="totalPrice">$0.00</h3>
                     </div>
 
                     <!-- Place Order Button -->
                     <button id="placeOrderBtn" class="btn btn-success btn-lg w-100" disabled onclick="placeOrder()">
-                        Place Order
+                        <i class="bi bi-check-circle"></i> Place Order
                     </button>
                 </div>
             </div>
@@ -126,13 +133,14 @@
 
 <style>
     .menu-card {
-        transition: transform 0.2s, box-shadow 0.2s;
+        transition: all 0.3s ease;
         cursor: pointer;
+        overflow: hidden;
     }
     
     .menu-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+        transform: translateY(-10px);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.3) !important;
     }
     
     .menu-image, .menu-image-placeholder {
@@ -141,8 +149,11 @@
     }
     
     .cart-item {
-        padding: 10px;
+        padding: 15px;
         border-bottom: 1px solid #eee;
+        background: #f8f9fa;
+        border-radius: 10px;
+        margin-bottom: 10px;
     }
     
     .cart-item:last-child {
@@ -152,8 +163,19 @@
     .customizations {
         font-size: 0.85rem;
         background: #f8f9fa;
-        padding: 8px;
-        border-radius: 5px;
+        padding: 10px;
+        border-radius: 8px;
+        border-left: 3px solid #0d6efd;
+    }
+    
+    .add-to-cart-btn {
+        font-weight: bold;
+        letter-spacing: 0.5px;
+    }
+    
+    .btn-group .btn {
+        border-radius: 20px !important;
+        margin: 2px;
     }
 </style>
 
@@ -226,7 +248,12 @@ function updateCart() {
     const placeOrderBtn = document.getElementById('placeOrderBtn');
     
     if (cart.length === 0) {
-        cartItemsDiv.innerHTML = '<p class="text-muted text-center">Your cart is empty</p>';
+        cartItemsDiv.innerHTML = `
+            <div class="text-center py-4 text-muted">
+                <i class="bi bi-cart-x fs-1"></i>
+                <p class="mt-2">Your cart is empty</p>
+            </div>
+        `;
         totalPriceDiv.textContent = '$0.00';
         placeOrderBtn.disabled = true;
         return;
@@ -240,24 +267,24 @@ function updateCart() {
         total += itemTotal;
         
         html += `
-            <div class="cart-item">
+            <div class="cart-item shadow-sm">
                 <div class="d-flex justify-content-between align-items-start">
                     <div class="flex-grow-1">
-                        <strong>${item.name}</strong>
-                        ${item.customizations.length > 0 ? `<br><small class="text-muted">${item.customizations.join(', ')}</small>` : ''}
-                        <br><small>$${item.price.toFixed(2)} each</small>
+                        <strong class="text-primary">${item.name}</strong>
+                        ${item.customizations.length > 0 ? `<br><small class="text-muted"><i class="bi bi-tags"></i> ${item.customizations.join(', ')}</small>` : ''}
+                        <br><small class="text-success fw-bold">$${item.price.toFixed(2)} each</small>
                     </div>
-                    <button class="btn btn-sm btn-outline-danger" onclick="removeFromCart(${index})">
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeFromCart(${index})" title="Remove item">
                         <i class="bi bi-trash"></i>
                     </button>
                 </div>
                 <div class="d-flex justify-content-between align-items-center mt-2">
-                    <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-secondary" onclick="changeQuantity(${index}, -1)">-</button>
-                        <button class="btn btn-outline-secondary" disabled>${item.quantity}</button>
+                    <div class="btn-group btn-group-sm shadow-sm">
+                        <button class="btn btn-outline-secondary" onclick="changeQuantity(${index}, -1)">−</button>
+                        <button class="btn btn-outline-secondary" disabled><strong>${item.quantity}</strong></button>
                         <button class="btn btn-outline-secondary" onclick="changeQuantity(${index}, 1)">+</button>
                     </div>
-                    <strong>$${itemTotal.toFixed(2)}</strong>
+                    <strong class="text-success fs-5">$${itemTotal.toFixed(2)}</strong>
                 </div>
             </div>
         `;

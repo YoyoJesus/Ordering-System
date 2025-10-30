@@ -38,6 +38,11 @@ def send_sms(phone_number, message):
 def index():
     return redirect(url_for('worker_dashboard'))
 
+@app.route('/display')
+def display_board():
+    """Public display board showing all active orders with color coding"""
+    return render_template('display_board.html')
+
 @app.route('/orders', methods=['GET'])
 def list_orders():
     orders = list(mongo.db.orders.find({'status': {'$in': ['pending', 'in_progress']}}))
@@ -83,17 +88,29 @@ def update_order_status_form():
 
 @app.route('/api/orders')
 def api_orders():
-    orders = list(mongo.db.orders.find({'status': {'$in': ['pending', 'in_progress']}}).sort('order_time', 1))
+    # Get pending and in_progress orders, plus recently completed orders (last 10 minutes)
+    from datetime import datetime, timedelta
+    ten_minutes_ago = datetime.utcnow() - timedelta(minutes=10)
+    
+    orders = list(mongo.db.orders.find({
+        '$or': [
+            {'status': {'$in': ['pending', 'in_progress']}},
+            {'status': 'completed', 'completed_time': {'$gte': ten_minutes_ago}}
+        ]
+    }).sort('order_time', 1))
+    
     orders_data = []
     for order in orders:
         orders_data.append({
             'id': str(order['_id']),
             'order_number': order['order_number'],
             'customer_name': order['customer_name'],
+            'customer_phone': order.get('customer_phone', ''),
             'order_items': order['order_items'],
             'total_price': order['total_price'],
             'status': order['status'],
-            'order_time': order['order_time'].strftime('%H:%M') if 'order_time' in order else ''
+            'order_time': order['order_time'].isoformat() if 'order_time' in order else None,
+            'completed_time': order['completed_time'].isoformat() if 'completed_time' in order else None
         })
     return jsonify(orders_data)
 

@@ -1,6 +1,6 @@
 # Food Ordering System 🍕
 
-A modern microservices-based food ordering system built with Python Flask, MongoDB, and Docker. This system features two separate services: a customer service for placing orders and an employee service for managing and completing orders, with optional SMS notifications.
+A modern microservices-based food ordering system built with Python Flask, MongoDB, and Docker. This system features three separate services: a customer service for placing orders, an employee service for managing orders, and a public display service for showing order status.
 
 ## Features
 
@@ -16,6 +16,15 @@ A modern microservices-based food ordering system built with Python Flask, Mongo
 - 🔄 **Auto Refresh**: Real-time updates of new orders
 - 📊 **Order History**: View completed orders with analytics
 - 📱 **Automatic SMS**: Send completion notifications to customers
+- 🍽️ **Menu Management**: Admin interface to add/edit/delete menu items
+
+### Display Service (NEW!)
+- 📺 **Public Order Board**: Large display for customer-facing monitors
+- 🔴 **Red Cards**: New/pending orders
+- 🟡 **Yellow Cards**: Orders being cooked
+- 🟢 **Green Cards**: Ready orders (auto-clear after 5 minutes)
+- ⏰ **Live Clock**: Real-time date and time display
+- 🔄 **Auto-Refresh**: Updates every 3 seconds
 
 ## Technology Stack
 
